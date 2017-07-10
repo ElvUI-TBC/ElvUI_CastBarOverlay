@@ -2,7 +2,6 @@ local E, L, V, P, G, _ = unpack(ElvUI); --Import: Engine, Locales, PrivateDB, Pr
 local CBO = E:GetModule("CastBarOverlay")
 local UF = E:GetModule("UnitFrames");
 local EP = LibStub("LibElvUIPlugin-1.0")
-local addon, ns = ...
 local CBS_Enabled = false
 
 --Cache global variables
@@ -205,7 +204,7 @@ end
 
 function CBO:Initialize()
 	-- Register callback with LibElvUIPlugin
-	EP:RegisterPlugin(addon, CBO.InsertOptions)
+	EP:RegisterPlugin("ElvUI_CastBarOverlay", CBO.InsertOptions)
 
 	--ElvUI UnitFrames are not enabled, stop right here!
 	if E.private.unitframe.enable ~= true then return end
@@ -220,7 +219,7 @@ function CBO:Initialize()
 	else
 		E.private.CBO.warned = false
 	end
-	
+
 	--Check if the old CastBarPowerOverlay is enabled
 	if IsAddOnLoaded("ElvUI_CastBarPowerOverlay") then
 		E:StaticPopup_Show("CBO_CBPOWARNING")

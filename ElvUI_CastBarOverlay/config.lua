@@ -73,7 +73,7 @@ function CBO:InsertOptions()
 			args = {},
 		}
 	end
-	
+
 	local function CreateOptionsGroup(order, name, unit, updateFunc)
 		local group = {
 			order = order,
@@ -174,7 +174,7 @@ function CBO:InsertOptions()
 				},
 			},
 		}
-		
+
 		return group
 	end
 
@@ -186,7 +186,7 @@ function CBO:InsertOptions()
 		disabled = function() return not E.private.unitframe.enable end,
 		args = {},
 	}
-	
+
 	local options = E.Options.args.blazeplugins.args.CBO.args
 	options.player = CreateOptionsGroup(1, L["Player"], "player", CBO.UpdateSettings)
 	options.target = CreateOptionsGroup(2, L["Target"], "target", CBO.UpdateSettings)
