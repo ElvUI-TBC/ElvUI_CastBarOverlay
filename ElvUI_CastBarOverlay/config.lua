@@ -1,6 +1,6 @@
-local E, L, V, P, G = unpack(ElvUI); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(ElvUI)
 local CBO = E:NewModule('CastBarOverlay', 'AceTimer-3.0', 'AceEvent-3.0')
-local UF = E:GetModule('UnitFrames');
+local UF = E:GetModule('UnitFrames')
 
 -- Defaults
 V['CBO'] = {
