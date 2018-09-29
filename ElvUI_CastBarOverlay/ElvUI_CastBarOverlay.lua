@@ -1,10 +1,9 @@
-local E, L, V, P, G, _ = unpack(ElvUI); --Import: Engine, Locales, PrivateDB, ProfileDB, GlobalDB
+local E, L, V, P, G = unpack(ElvUI)
 local CBO = E:GetModule("CastBarOverlay")
-local UF = E:GetModule("UnitFrames");
+local UF = E:GetModule("UnitFrames")
 local EP = LibStub("LibElvUIPlugin-1.0")
 local CBS_Enabled = false
 
---Cache global variables
 local _G = _G
 
 -- Create compatibility warning popup
@@ -14,16 +13,16 @@ E.PopupDialogs["CBOCompatibility"] = {
 	OnAccept = function() E.private.CBO.warned = true end,
 	timeout = 0,
 	whileDead = 1,
-	preferredIndex = 3,
+	preferredIndex = 3
 }
 
 E.PopupDialogs["CBO_CBPOWARNING"] = {
 	text = L["CBO_CBPOWARNING"],
 	button1 = L["I understand"],
-	OnAccept = function() DisableAddOn("ElvUI_CastBarPowerOverlay"); ReloadUI() end,
+	OnAccept = function() DisableAddOn("ElvUI_CastBarPowerOverlay") ReloadUI() end,
 	timeout = 0,
 	whileDead = 1,
-	preferredIndex = 3,
+	preferredIndex = 3
 }
 
 -- Warn about trying to overlay on disabled power bar
@@ -32,13 +31,13 @@ E.PopupDialogs["CBO_PowerDisabled"] = {
 	button1 = L["I understand"],
 	timeout = 0,
 	whileDead = 1,
-	preferredIndex = 3,
+	preferredIndex = 3
 }
 
 --Set size of castbar and position on chosen frame
 local function SetCastbarSizeAndPosition(unit, unitframe, overlayFrame)
-	local db = E.db.CBO[unit];
-	local cdb = E.db.unitframe.units[unit].castbar;
+	local db = E.db.CBO[unit]
+	local cdb = E.db.unitframe.units[unit].castbar
 	local castbar = unitframe.Castbar
 
 	local frameStrata = db.overlayOnFrame == "HEALTH" and unitframe.RaisedElementParent:GetFrameStrata() or overlayFrame:GetFrameStrata()
@@ -66,12 +65,12 @@ local function SetCastbarSizeAndPosition(unit, unitframe, overlayFrame)
 	castbar.ButtonIcon.bg:Size(overlayHeight + unitframe.BORDER*2)
 
 	-- Position the castbar on overLayFrame
-	if (not cdb.iconAttached) then
+	if not cdb.iconAttached then
 		castbar:SetInside(overlayFrame, 0, 0)
 	else
 		local iconWidth = cdb.icon and (castbar.ButtonIcon.bg:GetWidth() - unitframe.BORDER) or 0
 		castbar:ClearAllPoints()
-		if(unitframe.ORIENTATION == "RIGHT") then
+		if unitframe.ORIENTATION == "RIGHT" then
 			castbar:SetPoint("TOPLEFT", overlayFrame, "TOPLEFT")
 			castbar:SetPoint("BOTTOMRIGHT", overlayFrame, "BOTTOMRIGHT", -iconWidth - unitframe.SPACING*3, 0)
 		else
@@ -89,7 +88,7 @@ end
 
 --Reset castbar size and position
 local function ResetCastbarSizeAndPosition(unit, unitframe)
-	local cdb = E.db.unitframe.units[unit].castbar;
+	local cdb = E.db.unitframe.units[unit].castbar
 	local castbar = unitframe.Castbar
 	local mover = castbar.Holder.mover
 
@@ -111,7 +110,7 @@ local function ResetCastbarSizeAndPosition(unit, unitframe)
 		end
 		E:EnableMover(mover:GetName())
 	else
-		--Boss/Arena frame castbars don't have movers
+		-- Arena frame castbars don't have movers
 		castbar.Holder:ClearAllPoints()
 		castbar.Holder:Point("TOPLEFT", unitframe, "BOTTOMLEFT", 0, -(E.Border * 3))
 	end
@@ -150,8 +149,8 @@ end
 
 --Initiate update/reset of castbar
 local function ConfigureCastbar(unit, unitframe)
-	local db = E.db.CBO[unit];
-	local cdb = E.db.unitframe.units[unit].castbar;
+	local db = E.db.CBO[unit]
+	local cdb = E.db.unitframe.units[unit].castbar
 	local castbar = unitframe.Castbar
 
 	if db.overlay then
@@ -166,8 +165,8 @@ end
 
 --Initiate update of unit
 function CBO:UpdateSettings(unit)
-	local db = E.db.CBO[unit];
-	local cdb = E.db.unitframe.units[unit].castbar;
+	local db = E.db.CBO[unit]
+	local cdb = E.db.unitframe.units[unit].castbar
 
 	--Check if power is disabled and overlay is set to POWER
 	if not E.db.unitframe.units[unit].power.enable and (E.db.CBO[unit].overlay and E.db.CBO[unit].overlayOnFrame == "POWER") then
@@ -184,11 +183,6 @@ function CBO:UpdateSettings(unit)
 			local unitframe = _G["ElvUF_Arena"..i]
 			ConfigureCastbar(unit, unitframe)
 		end
-	elseif unit == "boss" then
-		for i = 1, 4 do
-			local unitframe = _G["ElvUF_Boss"..i]
-			ConfigureCastbar(unit, unitframe)
-		end
 	end
 end
 
@@ -199,7 +193,6 @@ function CBO:UpdateAllCastbars()
 	CBO:UpdateSettings("focus")
 	CBO:UpdateSettings("pet")
 	CBO:UpdateSettings("arena")
-	CBO:UpdateSettings("boss")
 end
 
 function CBO:Initialize()
@@ -233,7 +226,7 @@ function CBO:Initialize()
 
 	--Castbar was modified, re-apply settings
 	hooksecurefunc(UF, "Configure_Castbar", function(self, frame, preventLoop)
-		if preventLoop then return; end --I call Configure_Castbar with "true" as 2nd argument
+		if preventLoop then return end --I call Configure_Castbar with "true" as 2nd argument
 		local unit = frame.unitframeType
 		if unit and E.db.CBO[unit] and E.db.CBO[unit].overlay then
 			CBO:UpdateSettings(unit)
@@ -241,7 +234,7 @@ function CBO:Initialize()
 	end)
 
 	--Health may have changed size, update castbar overlay settings
-	hooksecurefunc(UF,"Configure_HealthBar", function(self, frame)
+	hooksecurefunc(UF, "Configure_HealthBar", function(self, frame)
 		local unit = frame.unitframeType
 		if unit and E.db.CBO[unit] and E.db.CBO[unit].overlay and E.db.CBO[unit].overlayOnFrame == "HEALTH" then
 			CBO:UpdateSettings(unit)
@@ -249,7 +242,7 @@ function CBO:Initialize()
 	end)
 
 	--Power may have changed size, update castbar overlay settings
-	hooksecurefunc(UF,"Configure_Power",function(self, frame)
+	hooksecurefunc(UF, "Configure_Power", function(self, frame)
 		local unit = frame.unitframeType
 		if unit and E.db.CBO[unit] and E.db.CBO[unit].overlay and E.db.CBO[unit].overlayOnFrame == "POWER" then
 			CBO:UpdateSettings(unit)
