@@ -36,9 +36,14 @@ E.PopupDialogs["CBO_PowerDisabled"] = {
 
 --Set size of castbar and position on chosen frame
 local function SetCastbarSizeAndPosition(unit, unitframe, overlayFrame)
+	assert(type(unitframe) == "table", "Bad argument #2 to `SetCastbarSizeAndPosition' (table expected, got " .. type(unitframe) .. ")")
+	assert(type(overlayFrame) == "table", "Bad argument #3 to `SetCastbarSizeAndPosition' (table expected, got " .. type(overlayFrame) .. ")")
+
 	local db = E.db.CBO[unit]
-	local cdb = E.db.unitframe.units[unit].castbar
+	local fdb = E.db.unitframe.units[unit] -- can be nil
+	local cdb = fdb and fdb.castbar -- can be nil
 	local castbar = unitframe.Castbar
+	local mover = castbar.Holder and castbar.Holder.mover -- can be nil
 
 	local frameStrata = db.overlayOnFrame == "HEALTH" and unitframe.RaisedElementParent:GetFrameStrata() or overlayFrame:GetFrameStrata()
 	local frameLevel = (db.overlayOnFrame == "HEALTH" and unitframe.RaisedElementParent:GetFrameLevel() or overlayFrame:GetFrameLevel()) + 2
@@ -51,7 +56,9 @@ local function SetCastbarSizeAndPosition(unit, unitframe, overlayFrame)
 	local overlayHeight = overlayFrame:GetHeight()
 
 	-- Set castbar height and width according to chosen overlay panel
-	cdb.width, cdb.height = overlayWidth, overlayHeight
+	if cdb then
+		cdb.width, cdb.height = overlayWidth, overlayHeight
+	end
 
 	-- Update internal settings
 	UF:Configure_Castbar(unitframe, true) --2nd argument is to prevent loop
@@ -65,10 +72,10 @@ local function SetCastbarSizeAndPosition(unit, unitframe, overlayFrame)
 	castbar.ButtonIcon.bg:Size(overlayHeight + unitframe.BORDER*2)
 
 	-- Position the castbar on overLayFrame
-	if not cdb.iconAttached then
+	if (cdb and not cdb.iconAttached) then
 		castbar:SetInside(overlayFrame, 0, 0)
 	else
-		local iconWidth = cdb.icon and (castbar.ButtonIcon.bg:GetWidth() - unitframe.BORDER) or 0
+		local iconWidth = (cdb and cdb.icon) and (castbar.ButtonIcon.bg:GetWidth() - unitframe.BORDER) or 0
 		castbar:ClearAllPoints()
 		if unitframe.ORIENTATION == "RIGHT" then
 			castbar:SetPoint("TOPLEFT", overlayFrame, "TOPLEFT")
@@ -79,8 +86,8 @@ local function SetCastbarSizeAndPosition(unit, unitframe, overlayFrame)
 		end
 	end
 
-	if(castbar.Holder.mover) then
-		E:DisableMover(castbar.Holder.mover:GetName())
+	if mover then
+		E:DisableMover(mover:GetName())
 	end
 
 	castbar.isOverlayed = true
@@ -88,12 +95,17 @@ end
 
 --Reset castbar size and position
 local function ResetCastbarSizeAndPosition(unit, unitframe)
-	local cdb = E.db.unitframe.units[unit].castbar
-	local castbar = unitframe.Castbar
-	local mover = castbar.Holder.mover
+	assert(type(unitframe) == "table", "Bad argument #2 to `ResetCastbarSizeAndPosition' (table expected, got " .. type(unitframe) .. ")")
 
-	--Reset size back to default
-	cdb.width, cdb.height = E.db.unitframe.units[unit].width, P.unitframe.units[unit].castbar.height
+	local fdb = E.db.unitframe.units[unit] -- can be nil
+	local cdb = fdb and fdb.castbar -- can be nil
+	local castbar = unitframe.Castbar
+	local mover = castbar.Holder and castbar.Holder.mover -- can be nil
+
+	-- Reset size back to default
+	if cdb then
+		cdb.width, cdb.height = fdb.width, P.unitframe.units[unit].castbar.height
+	end
 
 	-- Reset frame strata and level
 	castbar:SetFrameStrata(castbar.origFrameStrata)
@@ -149,8 +161,11 @@ end
 
 --Initiate update/reset of castbar
 local function ConfigureCastbar(unit, unitframe)
+	assert(type(unitframe) == "table", "Bad argument #2 to `ConfigureCastbar' (table expected, got " .. type(unitframe) .. ")")
+
 	local db = E.db.CBO[unit]
-	local cdb = E.db.unitframe.units[unit].castbar
+	local fdb = E.db.unitframe.units[unit] -- can be nil
+	local cdb = fdb and fdb.castbar -- can be nil
 	local castbar = unitframe.Castbar
 
 	if db.overlay then
@@ -166,19 +181,20 @@ end
 --Initiate update of unit
 function CBO:UpdateSettings(unit)
 	local db = E.db.CBO[unit]
-	local cdb = E.db.unitframe.units[unit].castbar
+	local fdb = E.db.unitframe.units[unit] -- can be nil
+	local cdb = fdb and fdb.castbar -- can be nil
 
 	--Check if power is disabled and overlay is set to POWER
-	if not E.db.unitframe.units[unit].power.enable and (E.db.CBO[unit].overlay and E.db.CBO[unit].overlayOnFrame == "POWER") then
+	if (fdb and fdb.power and not fdb.power.enable) and (db.overlay and db.overlayOnFrame == "POWER") then
 		E:StaticPopup_Show("CBO_PowerDisabled", unit)
-		E.db.CBO[unit].overlayOnFrame = "HEALTH"
+		db.overlayOnFrame = "HEALTH"
 	end
 
 	if (unit == "player" and not CBS_Enabled) or unit == "target" or unit == "focus" or unit == "pet" then
 		local unitFrameName = "ElvUF_"..E:StringTitle(unit)
 		local unitframe = _G[unitFrameName]
 		ConfigureCastbar(unit, unitframe)
-	elseif unit == "arena" then
+	elseif unit == "arena" then -- important: doesn't exist in Burning Crusade
 		for i = 1, 5 do
 			local unitframe = _G["ElvUF_Arena"..i]
 			ConfigureCastbar(unit, unitframe)
@@ -192,7 +208,9 @@ function CBO:UpdateAllCastbars()
 	CBO:UpdateSettings("target")
 	CBO:UpdateSettings("focus")
 	CBO:UpdateSettings("pet")
-	CBO:UpdateSettings("arena")
+	if ElvUF_Arena1 then -- important: Burning Crusade doesn't have arena frames, so verify existence first
+		CBO:UpdateSettings("arena")
+	end
 end
 
 function CBO:Initialize()
